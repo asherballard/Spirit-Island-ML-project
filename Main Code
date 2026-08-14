@@ -11,8 +11,10 @@ def main(Board, Spirit, Adversary):
     Blight_Pool = 3
     game_end = False
     Terror_level = 0
+    Invader_array = []
+    Fear_deck = 12
     while (True):
-        turn(board, Invader_Deck, Invader_Turn, Adversary, 3, False, [], 12)
+        Blight_Pool, Blighted = turn(board, Invader_Deck, Invader_Turn, Adversary, Blight_Pool, Blighted, Invader_array, Fear_deck)
         if game_end:
             break
 
@@ -25,8 +27,8 @@ class Major_Power:
 class Fear_Card:
     pass
 
-def damage(Board, Land, Index, Damage):
-    Board(Land-1(Index)).token_modify(0, Damage)
+def damage(Land, Index, Damage):
+    Land.token_modify(0, Damage)
 
 def user_damage_one(Board, Land, Index):
     damage(Board, Land, Index, 1)
@@ -50,29 +52,29 @@ class Invader_Deck:
         self.stage2.pop()
         for x in range(3):
             self.stage3.pop()
-        Invaders_Stage1 = []
-        Invaders_Stage2 = []
-        Invaders_Stage3 = []
+        self.Invaders_Stage1 = []
+        self.Invaders_Stage2 = []
+        self.Invaders_Stage3 = []
 
         for x in self.stage1:
             Invade_Card = Invader_Card( 1, False, x)
-            Invaders_Stage1.append(Invade_Card)
+            self.Invaders_Stage1.append(Invade_Card)
         for x in self.stage2:
             Invade_Card = Invader_Card( 2, True, x)
-            Invaders_Stage2.append(Invade_Card)
+            self.Invaders_Stage2.append(Invade_Card)
 
         for x in self.stage3:
             Invade_Card = Invader_Card( 3, False, x)
-            Invaders_Stage3.append(Invade_Card)
+            self.Invaders_Stage3.append(Invade_Card)
 
 #I need to add specifics
 # Dahan 12, explorer 2, town 32, city 43, blight 5
 # Mountain 1, Wetland 2, Jungle 3, Sands 4
 class Invader:
-    def __init__(self):
-        self.max_health = 0
-        self.health = 0
-        self.damage = 0
+    def __init__(self, max_health, damage):
+        self.max_health = max_health
+        self.health = max_health
+        self.damage = damage
     def token_modify(self, health, damage):
         self.health += health
         self.damage += damage
@@ -214,9 +216,10 @@ def turn(Board, Invader_Deck, Invader_Turn, Adversary, Blight_Pool, Blighted, In
     spirit_phase(Spirits)
     fast_phase(Spirits)
     end_check(Blight_Pool, Blighted, Invader_array, Fear_deck)
-    invader_phase(Board, Invader_Turn, Adversary, Blight_Pool, Blighted, Invader_array, Fear_deck)
+    Blight_Pool, Blighted = invader_phase(Board, Invader_Turn, Adversary, Blight_Pool, Blighted, Invader_array, Fear_deck)
     slow_phase(Spirits)
     end_check(Blight_Pool, Blighted, Invader_array, Fear_deck)
+    return Blight_Pool, Blighted
 
 def spirit_phase(Spirits):
     for x in Spirits:
@@ -230,9 +233,10 @@ def fast_phase(Spirits):
 
 
 def invader_phase(Board, Invader_Turn, Adversary, Blight_Pool, Blighted, Invader_array, Fear_deck):
-    ravage(Board, Invader_Turn[0], Adversary, Blight_Pool, Blighted, Invader_array, Fear_deck)
+    Blight_Pool, Blighted = ravage(Board, Invader_Turn[0], Adversary, Blight_Pool, Blighted, Invader_array, Fear_deck)
     build(Board, Invader_Turn[1], Adversary)
     explore(Board, Invader_Turn[2], Adversary)
+    return Blight_Pool, Blighted
 
 def ravage(Board, Invader_Turn, Adversary, Blight_Pool, Blighted, Invader_array, Fear_deck):
     if Invader_Turn:
@@ -240,9 +244,10 @@ def ravage(Board, Invader_Turn, Adversary, Blight_Pool, Blighted, Invader_array,
             if has_invaders(x):
                 invaders = x.get_invaders()
                 if invaders[0] + (2 * invaders[1]) + (3 * invaders[2]) - x.get_defense() > 1:
-                    blight(x, Blight_Pool, Blighted, Invader_array, Fear_deck)
+                    Blight_Pool, Blighted = blight(x, Blight_Pool, Blighted, Invader_array, Fear_deck)
                 dahan_counterattack(Board, x, x.get_dahan()*2)
     end_check(Blight_Pool, Blighted, Invader_array, Fear_deck)
+    return Blight_Pool, Blighted
 
 def dahan_counterattack(Board, Land, Number):
     for x in range(Number):
@@ -262,10 +267,13 @@ def build(Board, Invader_Turn, Adversary):
 def explore(Board, Invader_Turn, Adversary):
     if Invader_Turn:
         for x in Invader_Turn:
-            for y in x.get_adjacencies():
-                if has_invaders(y):
-                    x.modify(1, 0, 0, 0, 0, 0, [Explorer()])
-                    break
+            if Board.get_land(x).get_coastal():
+                Board.get_land(x).modify(1, 0, 0, 0, 0, 0, [Explorer()])
+            else:
+                for y in Board.get_land(x).get_adjacencies():
+                    if has_invaders(Board.get_land(y)):
+                        Board.get_land(x).modify(1, 0, 0, 0, 0, 0, [Explorer()])
+                        break
     else:
         game_over(False)
 
@@ -295,7 +303,8 @@ def blight(land, Blight_Pool, Blighted, Invader_array, Fear_deck):
     end_check(Blight_Pool, Blighted, Invader_array, Fear_deck)
     if land.get_blight() > 1:
         cascade = input("Where will you cascade?")
-        blight(cascade, Blight_Pool, Blighted, Invader_array, Fear_deck)
+        Blight_Pool, Blighted = blight(cascade, Blight_Pool, Blighted, Invader_array, Fear_deck)
+    return Blight_Pool, Blighted
 
 def clean_up():
     pass
@@ -316,11 +325,19 @@ def play_card(Spirit, Card_Index):
     getattr(Spirit, power_dict[Card_Index])()
 
 class Spirit(Minor_Power, Major_Power):
-    powers_turn = []
-    fast_powers = []
-    slow_powers = []
-    elements = [0, 0, 0, 0, 0, 0, 0, 0]
-    def discard(self, spirit, power):
+    def __init__(self):
+        self.powers_turn = []
+        self.fast_powers = []
+        self.slow_powers = []
+        self.discard_pile = []
+        self.hand = []
+        self.presence_land = []
+        self.sacred_sites = []
+        self.elements = [0] * 8
+    def discard(self, power):
+        self.discard_pile.append(power)
+        self.hand.pop(power)
+    def forget(self):
         pass
     def get_powers_turn(self):
         return self.powers_turn
@@ -338,13 +355,11 @@ class Spirit(Minor_Power, Major_Power):
 
 class River_Surges_Like_Sunlight(Spirit):
     def __init__(self):
-        self.presence_land = []
-        self.sacred_sites = []
+        super().__init__()
         self.card_plays = 1
         self.energy = 0
         self.energy_turn = 1
         self.hand = [100, 101, 102, 103]
-        self.discard = []
         self.top_track = 6
         self.bottom_track = 6
         self.reclaim_one = False
@@ -402,16 +417,15 @@ class River_Surges_Like_Sunlight(Spirit):
 
     def G1(self):
         self.hand.extend(self.discard)
-        self.discard.clear()
+        self.discard_pile.clear()
         self.gain_card()
         self.energy += 1
         self.grow(0, 0)
     def G2(self):
-        pass
         Land1 = input("What Land would you like to grow to?")
-        Land1.modify(0, 0, 0, 0, 0, 1)
+        Land1.modify(0, 0, 0, 0, 0, 1, [])
         Land2 = input("What Land would you like to grow to?")
-        Land2.modify(0, 0, 0, 0, 0, 1)
+        Land2.modify(0, 0, 0, 0, 0, 1, [])
         Track1 = input("")
         Track2 = input("")
         self.grow(Track1, Track2)
@@ -425,7 +439,8 @@ class River_Surges_Like_Sunlight(Spirit):
         self.grow(Track1, Track2)
 
 class game_state():
-    pass
+    def __init__(self, Spirits, Adversary, Blight_Pool, Blighted, Fear_Pool, Fear_Cards, Invader_deck, Boards):
+        pass
 
 power_dict = {
     100: "Boon_of_Vigor",
