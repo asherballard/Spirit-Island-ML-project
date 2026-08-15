@@ -1,0 +1,460 @@
+import random
+
+#Board = input("What Board?")
+#Spirit = input("What Spirit?")
+#Adversery = input("What Adversary?")
+
+def main(Board, Spirit, Adversary):
+    River = River_Surges_Like_Sunlight()
+    board, Invader_Turn = setup(Board, River, Adversary)
+    Blighted = False
+    Blight_Pool = 3
+    game_end = False
+    Terror_level = 0
+    Invader_array = []
+    Fear_deck = 12
+    while (True):
+        Blight_Pool, Blighted = turn(board, Invader_Deck, Invader_Turn, Adversary, Blight_Pool, Blighted, Invader_array, Fear_deck)
+        if game_end:
+            break
+
+class Minor_Power:
+    pass
+
+class Major_Power:
+    pass
+
+class Fear_Card:
+    pass
+
+def damage(Land, Index, Damage):
+    Land.token_modify(0, Damage)
+
+def user_damage_one(Board, Land, Index):
+    damage(Board, Land, Index, 1)
+
+class Invader_Card:
+    def __init__(self, stage, escalation, land):
+        self.stage = stage
+        self.escalation = escalation
+        self.land = land
+
+#stage 3 needs to be fixed
+class Invader_Deck:
+    def __init__(self):
+        self.stage1 = [0, 1, 2, 3]
+        self.stage2 = [0, 1, 2, 3]
+        self.stage3 = [0, 1, 2, 3, 4, 5]
+        random.shuffle(self.stage1)
+        random.shuffle(self.stage2)
+        random.shuffle(self.stage3)
+        self.stage1.pop()
+        self.stage2.pop()
+        for x in range(3):
+            self.stage3.pop()
+        self.Invaders_Stage1 = []
+        self.Invaders_Stage2 = []
+        self.Invaders_Stage3 = []
+
+        for x in self.stage1:
+            Invade_Card = Invader_Card( 1, False, x)
+            self.Invaders_Stage1.append(Invade_Card)
+        for x in self.stage2:
+            Invade_Card = Invader_Card( 2, True, x)
+            self.Invaders_Stage2.append(Invade_Card)
+
+        for x in self.stage3:
+            Invade_Card = Invader_Card( 3, False, x)
+            self.Invaders_Stage3.append(Invade_Card)
+
+#I need to add specifics
+# Dahan 12, explorer 2, town 32, city 43, blight 5
+# Mountain 1, Wetland 2, Jungle 3, Sands 4
+class Invader:
+    def __init__(self, max_health, damage):
+        self.max_health = max_health
+        self.health = max_health
+        self.damage = damage
+    def token_modify(self, health, damage):
+        self.health += health
+        self.damage += damage
+
+class Explorer(Invader):
+    def __init__(self):
+        super().__init__(1, 1)
+
+class Town(Invader):
+    def __init__(self):
+        super().__init__(2, 2)
+
+
+class City(Invader):
+    def __init__(self):
+        super().__init__(3, 3)
+
+
+class Board:
+    def __init__(self):
+        self.lands = []
+
+    def Board_A(self):
+        self.lands = [
+        Land(1, 1, [], [2, 4, 5, 6], True, 'b', 0),
+        Land(2, 2, [10, 40], [1, 3, 4], True, 'd', 0),
+        Land(3, 3, [10, 10], [2, 4], True, 'n', 0),
+        Land(4, 4, [5], [1, 2, 3, 5], False, 'n', 0),
+        Land(5, 2, [], [1, 4, 6, 7, 8], False, 'n', 0),
+        Land(6, 1, [10], [1, 5, 8], False, 'n', 0),
+        Land(7, 4, [10, 10], [5, 8], False, 'n', 0),
+        Land(8, 3, [30], [5, 6, 7], False, 'n', 0)
+        ]
+    def Board_B(self):
+        self.lands = [
+        Land(1, 2, [10], [2, 4, 5, 6], True, 'n', 1),
+        Land(2, 1, [40], [1, 3, 4], True, 'd', 1),
+        Land(3, 4, [10, 10], [2, 4], True, 'n', 1),
+        Land(4, 3, [5], [1, 2, 3, 5, 7], False, 'n', 1),
+        Land(5, 4, [], [1, 4, 6, 7], False, 'b', 1),
+        Land(6, 2, [30], [1, 5, 7, 8], False, 'n', 1),
+        Land(7, 1, [10], [4, 5, 6, 8], False, 'n', 1),
+        Land(8, 3, [10, 10], [6, 7], False, 'n', 1)
+        ]
+    def Board_C(self):
+        self.lands = [
+        Land(1, 3, [10], [2, 5, 6], True, 'b', 2),
+        Land(2, 4, [40], [1, 3, 4, 5], True, 'b', 2),
+        Land(3, 1, [10, 10], [2, 4], True, 'b', 2),
+        Land(4, 3, [], [2, 3, 5, 7], False, 'b', 2),
+        Land(5, 2, [10, 10, 5], [1, 2, 4, 6, 7], False, 'b', 2),
+        Land(6, 4, [10], [1, 5, 7, 8], False, 'b', 2),
+        Land(7, 1, [30], [4, 5, 6, 8], False, 'b', 2),
+        Land(8, 2, [], [6, 7], False, 'b', 2)
+        ]
+    def Board_D(self):
+        self.lands = [
+        Land(1, 2, [10, 10], [2, 5, 7, 8], True, 'b', 3),
+        Land(2, 3, [40, 10], [1, 3, 4, 5], True, 'b', 3),
+        Land(3, 2, [], [2, 4], True, 'b', 3),
+        Land(4, 4, [], [2, 3, 5, 6], False, 'b', 3),
+        Land(5, 1, [10, 5], [1, 2, 4, 6, 7], False, 'b', 3),
+        Land(6, 3, [], [4, 5, 7], False, 'b', 3),
+        Land(7, 4, [10, 10, 30], [1, 5, 6, 8], False, 'b', 3),
+        Land(8, 1, [], [1, 7], False, 'b', 3)
+        ]
+    def get_lands(self):
+        return self.lands
+    def get_land(self, index):
+        return self.lands[index-1]
+class Land:
+    def __init__(self, number, terrain, setup, adjacencies, coastal, token, board):
+        self.number = number
+        self.terrain = terrain
+        self.setup = setup
+        self.adjacancies = adjacencies
+        self.coastal = coastal
+        self.token = token
+        self.board = board
+        self.tokens_array = []
+        self.dahan = 0
+        self.explorer = 0
+        self.town = 0
+        self.city = 0
+        self.blight = 0
+        self.prescence = 0
+        self.defense = 0
+
+
+    def modify(self, dahan, explorer, town, city, blight, prescence, token_array):
+        self.dahan += dahan
+        self.explorer += explorer
+        self.town += town
+        self.city += city
+        self.blight += blight
+        self.prescence += prescence
+        self.tokens_array += token_array
+
+    def build_difference(self):
+        return self.city > self.town
+
+    def get_adjacencies(self):
+        return self.adjacancies
+
+    def get_invaders(self):
+        return [self.explorer, self.town, self.city]
+
+    def get_defense(self):
+        return self.defense
+
+    def get_dahan(self):
+        return self.dahan
+
+    def get_prescence(self):
+        return self.prescence
+
+    def get_blight(self):
+        return self.blight
+
+    def get_coastal(self):
+        return self.coastal
+
+
+def setup(Board_Letter, Spirit, Adversary):
+    board = Board()
+    if Board_Letter == "A":
+        board.Board_A()
+    elif Board_Letter == "B":
+        board.Board_B()
+    elif Board_Letter == "C":
+        board.Board_C()
+    else:
+        board.Board_D()
+    Invaders = Invader_Deck()
+    return board, Invaders
+
+
+def turn(Board, Invader_Deck, Invader_Turn, Adversary, Blight_Pool, Blighted, Invader_array, Fear_deck, Spirits):
+    spirit_phase(Spirits)
+    fast_phase(Spirits)
+    end_check(Blight_Pool, Blighted, Invader_array, Fear_deck)
+    Blight_Pool, Blighted = invader_phase(Board, Invader_Turn, Adversary, Blight_Pool, Blighted, Invader_array, Fear_deck)
+    slow_phase(Spirits)
+    end_check(Blight_Pool, Blighted, Invader_array, Fear_deck)
+    return Blight_Pool, Blighted
+
+def spirit_phase(Spirits):
+    for x in Spirits:
+        x.spirit_phase()
+
+
+def fast_phase(Spirits):
+    for x in Spirits:
+        for y in x.get_powers_turn():
+            x.play_card(y)
+
+
+def invader_phase(Board, Invader_Turn, Adversary, Blight_Pool, Blighted, Invader_array, Fear_deck):
+    Blight_Pool, Blighted = ravage(Board, Invader_Turn[0], Adversary, Blight_Pool, Blighted, Invader_array, Fear_deck)
+    build(Board, Invader_Turn[1], Adversary)
+    explore(Board, Invader_Turn[2], Adversary)
+    return Blight_Pool, Blighted
+
+def ravage(Board, Invader_Turn, Adversary, Blight_Pool, Blighted, Invader_array, Fear_deck):
+    if Invader_Turn:
+        for x in Invader_Turn:
+            if has_invaders(x):
+                invaders = x.get_invaders()
+                if invaders[0] + (2 * invaders[1]) + (3 * invaders[2]) - x.get_defense() > 1:
+                    Blight_Pool, Blighted = blight(x, Blight_Pool, Blighted, Invader_array, Fear_deck)
+                dahan_counterattack(Board, x, x.get_dahan()*2)
+    end_check(Blight_Pool, Blighted, Invader_array, Fear_deck)
+    return Blight_Pool, Blighted
+
+def dahan_counterattack(Board, Land, Number):
+    for x in range(Number):
+        Index = input("What do you want to damage?")
+        user_damage_one(Board, Land, Index)
+
+def build(Board, Invader_Turn, Adversary):
+    if Invader_Turn:
+        for x in Invader_Turn:
+            if has_invaders(x):
+                if x.build_difference():
+                    x.modify(0, 0, 1, 0, 0, 0, [Town()])
+                else:
+                    x.modify(0, 0, 0, 1, 0, 0, [City()])
+
+
+def explore(Board, Invader_Turn, Adversary):
+    if Invader_Turn:
+        for x in Invader_Turn:
+            if Board.get_land(x).get_coastal():
+                Board.get_land(x).modify(1, 0, 0, 0, 0, 0, [Explorer()])
+            else:
+                for y in Board.get_land(x).get_adjacencies():
+                    if has_invaders(Board.get_land(y)):
+                        Board.get_land(x).modify(1, 0, 0, 0, 0, 0, [Explorer()])
+                        break
+    else:
+        game_over(False)
+
+def has_invaders(land):
+    return (
+        land.explorer > 0
+        or land.town > 0
+        or land.city > 0
+    )
+
+def slow_phase(Spirits):
+    for x in Spirits:
+        for y in x.get_powers_turn():
+            x.play_card(y)
+
+def game_over(win):
+    pass
+
+def blight(land, Blight_Pool, Blighted, Invader_array, Fear_deck):
+    if land.get_prescence():
+        land.modify(0, 0, 0, 0, 1, -1, [])
+    else:
+        land.modify(0, 0, 0, 0, 1, 0, [])
+    Blight_Pool -= 1
+    if Blight_Pool < 1:
+        Blighted = True
+    end_check(Blight_Pool, Blighted, Invader_array, Fear_deck)
+    if land.get_blight() > 1:
+        cascade = input("Where will you cascade?")
+        Blight_Pool, Blighted = blight(cascade, Blight_Pool, Blighted, Invader_array, Fear_deck)
+    return Blight_Pool, Blighted
+
+def clean_up():
+    pass
+
+def end_check(Blight_Pool, Blighted, Invader_array, Fear_deck):
+    if Blighted and Blight_Pool < 1:
+        game_over(False)
+    elif not Invader_array or Fear_deck < 1:
+        game_over(True)
+
+
+
+
+def gain_card():
+    pass
+
+def play_card(Spirit, Card_Index):
+    getattr(Spirit, power_dict[Card_Index])()
+
+class Spirit(Minor_Power, Major_Power):
+    def __init__(self):
+        self.powers_turn = []
+        self.fast_powers = []
+        self.slow_powers = []
+        self.discard_pile = []
+        self.hand = []
+        self.presence_land = []
+        self.sacred_sites = []
+        self.elements = [0] * 8
+    def discard(self, power):
+        self.discard_pile.append(power)
+        self.hand.pop(power)
+    def forget(self):
+        pass
+    def get_powers_turn(self):
+        return self.powers_turn
+    def get_fast(self):
+        return self.fast_powers
+    def get_slow(self):
+        return self.slow_powers
+    def use_power(self, spirit, power):
+        if power < 100:
+            spirit.discard(spirit, power)
+        #add play card mechanic
+        self.powers_turn.pop(power)
+        self.fast_powers.pop(power)
+        self.slow_powers.pop(power)
+
+class River_Surges_Like_Sunlight(Spirit):
+    def __init__(self):
+        super().__init__()
+        self.card_plays = 1
+        self.energy = 0
+        self.energy_turn = 1
+        self.hand = [100, 101, 102, 103]
+        self.top_track = 6
+        self.bottom_track = 6
+        self.reclaim_one = False
+
+    def Massive_Flooding(self, Board, Land):
+        if self.elements[0] >= 3 and self.elements[4] >= 4 and self.elements[5] >= 1:
+            pass
+        elif self.elements[0] >= 2 and self.elements[4] >= 3:
+            pass
+        elif self.elements[0] >= 1 and self.elements[4] >= 2:
+            pass
+    def Boon_of_Vigor(self):
+        self.energy += 1
+    def Flash_Floods(self, Board, Land):
+        if Land.get_coastal():
+            pass
+        else:
+            pass
+    def Rivers_Bounty(self, Board, Land):
+        pass
+    def Wash_Away(self, Board, Land):
+        pass
+
+    def grow(self, top, bottom):
+        self.top_track += top
+        self.bottom_track += bottom
+        if self.bottom_track == 0:
+            self.card_plays = 5
+            self.reclaim_one = True
+        elif self.bottom_track < 2:
+            self.reclaim_one = True
+            self.card_plays = 4
+        elif self.bottom_track < 3:
+            self.reclaim_one = True
+            self.card_plays = 3
+        elif self.bottom_track < 4:
+            self.card_plays = 3
+        elif self.bottom_track < 6:
+            self.card_plays = 2
+        else:
+            self.card_plays = 1
+
+        if self.top_track == 0:
+            self.energy_turn = 5
+        elif self.top_track < 3:
+            self.energy_turn = 4
+        elif self.top_track < 4:
+            self.energy_turn = 3
+        elif self.top_track < 6:
+            self.energy_turn = 2
+        else:
+            self.energy_turn = 1
+
+        self.energy += self.energy_turn
+
+    def G1(self):
+        self.hand.extend(self.discard)
+        self.discard_pile.clear()
+        self.gain_card()
+        self.energy += 1
+        self.grow(0, 0)
+    def G2(self):
+        Land1 = input("What Land would you like to grow to?")
+        Land1.modify(0, 0, 0, 0, 0, 1, [])
+        Land2 = input("What Land would you like to grow to?")
+        Land2.modify(0, 0, 0, 0, 0, 1, [])
+        Track1 = input("")
+        Track2 = input("")
+        self.grow(Track1, Track2)
+
+    def G3(self):
+        Land = input("What Land would you like to grow to?")
+        Land.modify(0, 0, 0, 0, 0, 1, [])
+        self.gain_card()
+        Track1 = input("")
+        Track2 = input("")
+        self.grow(Track1, Track2)
+
+class game_state():
+    def __init__(self, Spirits, Adversary, Blight_Pool, Blighted, Fear_Pool, Fear_Cards, Invader_deck, Boards):
+        pass
+
+power_dict = {
+    100: "Boon_of_Vigor",
+    101: "Flash_Floods",
+    102: "Rivers_Bounty",
+    103:  "Wash_Away",
+    104: "Massive_Flooding"
+}
+
+class dahan():
+    def __init__(self):
+        self.max_health = 2
+        self.damage = 2
+
+    def token_modify(self, health, damage):
+        self.max_health += health
+        self.damage += damage
