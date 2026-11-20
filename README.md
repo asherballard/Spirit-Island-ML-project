@@ -1,0 +1,1 @@
+The project currently implements a solo-spirit game of Spirit Island in Python for River Surges in Sunlight, Lightning's Swift Strikes, Vital Strength of the Earth, and Shadows Flicker Like Flames. Additionally, the project also has an RL ML model for River Surges in Sunlight.
